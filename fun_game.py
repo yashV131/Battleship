@@ -53,12 +53,17 @@ CELL_SIZE = 20
 # Initialize for mouse position
 mouse_x, mouse_y = None, None
 
+#reveal grids toggle
+reveal1 = True
 #Initialize plater grids: (x,y):False (no ship) or True (ship)
 player1_grid = {(x, y): False for x in range(20) for y in range(20)}
 player2_grid = {(x, y): False for x in range(20) for y in range(20)}
 
+player1_clicks = []
+player2_clicks = []
+
 #draw the grid for battleships
-def draw_grid(surface, x0, y0, grid,reveal=False,xenter=0,yenter=0):
+def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
     if(reveal):
         for x in range(20):
             for y in range(20):
@@ -72,23 +77,27 @@ def draw_grid(surface, x0, y0, grid,reveal=False,xenter=0,yenter=0):
                 rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                 color = WHITE
                 pygame.draw.rect(surface, color, rect)
-            
-                if mouse_x is not None and mouse_y is not None:
-                    #check if mouse is inside the cell
-                    print("CELL PAINTER OUTSIDE IF")
-                    if leftwall <= mouse_x <= rightwall and topwall <= mouse_y <= bottomwall:
-                        #draw black box
-                        # rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
-                        print("AAAAAAAAAAAAA INSIDE IF")
-                        pygame.draw.rect(surface, RED, rect)
-
+                for x_coord,y_coord in player1_clicks:
+                    if x_coord is not None and y_coord is not None:
+                        #check if mouse is inside the cell
+                        if leftwall <= x_coord <= rightwall and topwall <= y_coord <= bottomwall:
+                            #draw black box
+                            # rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                            pygame.draw.rect(surface, RED, rect)
+                for x_coord,y_coord in player2_clicks:
+                    if x_coord is not None and y_coord is not None:
+                        #check if mouse is inside the cell
+                        if leftwall <= x_coord <= rightwall and topwall <= y_coord <= bottomwall:
+                            #draw black box
+                            # rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                            pygame.draw.rect(surface, RED, rect)
                 
     else:
         rect = pygame.Rect(x0, y0, CELL_SIZE*20-1, CELL_SIZE*20-1)
         color = (0,0,0)
         pygame.draw.rect(surface, color, rect)
         text_surface = font.render('It is not your turn yet!', True, (255, 255, 255))
-        screen.blit(text_surface, (x0+100, y0+190)) 
+        screen.blit(text_surface, (x0+100, y0+190))
   
 def reveal_player_ships(reveal1):
     if(reveal1):
@@ -96,7 +105,7 @@ def reveal_player_ships(reveal1):
         text_surface = font.render('Player 1, place your ships!', True, (255, 255, 255))
         screen.blit(text_surface, (rect_x1, rect_y1-40))  
         
-        draw_grid(screen, rect_x1, rect_y1, {},reveal1)
+        draw_grid(screen, rect_x1, rect_y1, {},reveal1,"player1")
         draw_grid(screen, rect_x2, rect_y1, {})
     else:
         # Player 2's turn
@@ -104,25 +113,67 @@ def reveal_player_ships(reveal1):
         screen.blit(text_surface, (rect_x2, rect_y1-40))  
         
         draw_grid(screen, rect_x1, rect_y1, {})
-        draw_grid(screen, rect_x2, rect_y1, {},True) 
+        draw_grid(screen, rect_x2, rect_y1, {},True,"player2") 
    
 
+# def event_handler():
+#      #Display mouse coordinates    
+#     global mouse_x, mouse_y
+#     x_coord, y_coord = pygame.mouse.get_pos()
+#     mouse_text = font.render(f' X,Y:({x_coord}, {y_coord})', True, WHITE)
+#     screen.blit(mouse_text, (800,500))
+    
+#     for event in pygame.event.get():
+#         if event.type == pygame.QUIT:
+#             return False
+#         elif event.type == pygame.MOUSEBUTTONDOWN:
+#             mouse_x, mouse_y = pygame.mouse.get_pos()
+            
+#             player1_clicks.append((mouse_x, mouse_y))
+#             #draw grid with black box
+#             draw_grid(screen, rect_x1, rect_y1, {},reveal1)
+#             print(f'Mouse clicked at: ({mouse_x}, {mouse_y})')
+#     return True
+
 def event_handler():
-     #Display mouse coordinates    
-    global mouse_x, mouse_y
+    global mouse_x, mouse_y, reveal1
+
+    # Display mouse coordinates    
     x_coord, y_coord = pygame.mouse.get_pos()
     mouse_text = font.render(f' X,Y:({x_coord}, {y_coord})', True, WHITE)
-    screen.blit(mouse_text, (800,500))
+    screen.blit(mouse_text, (800, 500))
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return False
+        
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-            #draw grid with black box
-            draw_grid(screen, rect_x1, rect_y1, {},reveal1,mouse_x,mouse_y)
-            print(f'Mouse clicked at: ({mouse_x}, {mouse_y})')
+
+            if len(player2_clicks) >= 5:
+                print("Both players have finished placing ships.")
+                
+            # PLAYER 1 TURN
+            elif reveal1:
+                player1_clicks.append((mouse_x, mouse_y))
+                print("P1 click:", mouse_x, mouse_y)
+
+                # Switch after 5 clicks
+                if len(player1_clicks) >= 5:
+                    print("Switching to Player 2...")
+                    reveal1 = False
+
+            # PLAYER 2 TURN
+            else:
+                player2_clicks.append((mouse_x, mouse_y))
+                print("P2 click:", mouse_x, mouse_y)
+
+                # stop after 5 clicks
+                if len(player2_clicks) >= 5:
+                    print("Player 2 finished placing ships.")
+
     return True
+
   
   
 # Game loop
@@ -131,7 +182,6 @@ while running:
     # Fill the background
     screen.fill((0,0,0))
     
-    reveal1 = True
     reveal_player_ships(reveal1)
         
     pygame.draw.rect(screen, BLUE, (rect_x1, rect_y1, rect_width, rect_height), line_thickness)
