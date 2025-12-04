@@ -1,3 +1,17 @@
+#REQUIREMENTS:
+'''• Display the rules of the game and instructions for the user
+• Display a set of options for the various things your players can do (display instructions,
+display score, quit early, etc)
+• Utilize basic coding elements taught in this class including if-elif-else statements, loops,
+dictionaries, functions (with docstrings), try-except statements, and comments
+• Use file input/output for something
+• Create a nice-looking user interface (consider using turtle graphics, tkinter, or pygame)
+• Create a complete, fully functional, high quality gaming experience
+• Incorporate at least one thing beyond what is covered in the course (learn something
+new)
+• Be creative and have fun!
+Use only 1 class! Multiple classes cannot be created.
+'''
 #Creates a dashboard
 import pygame
 
@@ -49,19 +63,8 @@ def draw_grid(surface, x0, y0, grid,reveal=False):
         pygame.draw.rect(surface, color, rect)
         text_surface = font.render('It is not your turn yet!', True, (255, 255, 255))
         screen.blit(text_surface, (x0+100, y0+190)) 
-        
-# Game loop
-running = True
-while running:
-    # Fill the background
-    screen.fill((0,0,0))
-    
-    #Display mouse coordinates    
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    mouse_text = font.render(f' X,Y:({mouse_x}, {mouse_y})', True, WHITE)
-    screen.blit(mouse_text, (800,500))
-    
-    reveal1 = False 
+  
+def reveal_player_ships(reveal1):
     if(reveal1):
         # Player 1's turn
         text_surface = font.render('Player 1, place your ships!', True, (255, 255, 255))
@@ -75,15 +78,37 @@ while running:
         screen.blit(text_surface, (rect_x2, rect_y1-40))  
         
         draw_grid(screen, rect_x1, rect_y1, {})
-        draw_grid(screen, rect_x2, rect_y1, {},True)
-    pygame.draw.rect(screen, BLUE, (rect_x1, rect_y1, rect_width, rect_height), line_thickness)
-    pygame.draw.rect(screen, BLUE, (rect_x2, rect_y1, rect_width, rect_height), line_thickness)
+        draw_grid(screen, rect_x2, rect_y1, {},True) 
+   
+
+def event_handler():
+     #Display mouse coordinates    
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    mouse_text = font.render(f' X,Y:({mouse_x}, {mouse_y})', True, WHITE)
+    screen.blit(mouse_text, (800,500))
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
-
-            
+            return False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_x, mouse_y = pygame.mouse.get_pos()
+            print(f'Mouse clicked at: ({mouse_x}, {mouse_y})')
+    return True
+    
+# Game loop
+running = True
+while running:
+    # Fill the background
+    screen.fill((0,0,0))
+    
+    reveal1 = True
+    reveal_player_ships(reveal1)
+        
+    pygame.draw.rect(screen, BLUE, (rect_x1, rect_y1, rect_width, rect_height), line_thickness)
+    pygame.draw.rect(screen, BLUE, (rect_x2, rect_y1, rect_width, rect_height), line_thickness)
+    
+    
+    running = event_handler()
 
     # Update the display
     pygame.display.flip()
