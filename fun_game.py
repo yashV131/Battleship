@@ -53,6 +53,10 @@ CELL_SIZE = 20
 # Initialize for mouse position
 mouse_x, mouse_y = None, None
 
+#Initialize plater grids: (x,y):False (no ship) or True (ship)
+player1_grid = {(x, y): False for x in range(20) for y in range(20)}
+player2_grid = {(x, y): False for x in range(20) for y in range(20)}
+
 #draw the grid for battleships
 def draw_grid(surface, x0, y0, grid,reveal=False,xenter=0,yenter=0):
     if(reveal):
@@ -66,13 +70,13 @@ def draw_grid(surface, x0, y0, grid,reveal=False,xenter=0,yenter=0):
 
                 #draw original grid
                 rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
-                color = (200, 200, 200)
+                color = WHITE
                 pygame.draw.rect(surface, color, rect)
             
                 if mouse_x is not None and mouse_y is not None:
                     #check if mouse is inside the cell
                     print("CELL PAINTER OUTSIDE IF")
-                    if leftwall <= xenter <= rightwall and topwall <= yenter <= bottomwall:
+                    if leftwall <= mouse_x <= rightwall and topwall <= mouse_y <= bottomwall:
                         #draw black box
                         # rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                         print("AAAAAAAAAAAAA INSIDE IF")
@@ -106,8 +110,8 @@ def reveal_player_ships(reveal1):
 def event_handler():
      #Display mouse coordinates    
     global mouse_x, mouse_y
-    mouse_x, mouse_y = pygame.mouse.get_pos()
-    mouse_text = font.render(f' X,Y:({mouse_x}, {mouse_y})', True, WHITE)
+    x_coord, y_coord = pygame.mouse.get_pos()
+    mouse_text = font.render(f' X,Y:({x_coord}, {y_coord})', True, WHITE)
     screen.blit(mouse_text, (800,500))
     
     for event in pygame.event.get():
@@ -119,7 +123,8 @@ def event_handler():
             draw_grid(screen, rect_x1, rect_y1, {},reveal1,mouse_x,mouse_y)
             print(f'Mouse clicked at: ({mouse_x}, {mouse_y})')
     return True
-    
+  
+  
 # Game loop
 running = True
 while running:
