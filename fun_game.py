@@ -1,5 +1,6 @@
 #REQUIREMENTS:
-'''• Display the rules of the game and instructions for the user
+'''
+• Display the rules of the game and instructions for the user
 • Display a set of options for the various things your players can do (display instructions,
 display score, quit early, etc)
 • Utilize basic coding elements taught in this class including if-elif-else statements, loops,
@@ -49,14 +50,35 @@ rect_x2 = rect_x1 + rect_width+20
 # since this is a 400x400 box, we can fit a 10x10 grid with each cell being 40x40
 CELL_SIZE = 20
 
+# Initialize for mouse position
+mouse_x, mouse_y = None, None
+
 #draw the grid for battleships
-def draw_grid(surface, x0, y0, grid,reveal=False):
+def draw_grid(surface, x0, y0, grid,reveal=False,xenter=0,yenter=0):
     if(reveal):
         for x in range(20):
             for y in range(20):
-                rect = pygame.Rect(x0 + x * CELL_SIZE, y0 + y * CELL_SIZE, CELL_SIZE-1, CELL_SIZE-1)
+                # calculate cell position
+                leftwall = x0 + x * CELL_SIZE
+                topwall = y0 + y * CELL_SIZE
+                rightwall = leftwall + CELL_SIZE-1
+                bottomwall = topwall + CELL_SIZE-1
+
+                #draw original grid
+                rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                 color = (200, 200, 200)
                 pygame.draw.rect(surface, color, rect)
+            
+                if mouse_x is not None and mouse_y is not None:
+                    #check if mouse is inside the cell
+                    print("CELL PAINTER OUTSIDE IF")
+                    if leftwall <= xenter <= rightwall and topwall <= yenter <= bottomwall:
+                        #draw black box
+                        # rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                        print("AAAAAAAAAAAAA INSIDE IF")
+                        pygame.draw.rect(surface, RED, rect)
+
+                
     else:
         rect = pygame.Rect(x0, y0, CELL_SIZE*20-1, CELL_SIZE*20-1)
         color = (0,0,0)
@@ -83,6 +105,7 @@ def reveal_player_ships(reveal1):
 
 def event_handler():
      #Display mouse coordinates    
+    global mouse_x, mouse_y
     mouse_x, mouse_y = pygame.mouse.get_pos()
     mouse_text = font.render(f' X,Y:({mouse_x}, {mouse_y})', True, WHITE)
     screen.blit(mouse_text, (800,500))
@@ -92,6 +115,8 @@ def event_handler():
             return False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
+            #draw grid with black box
+            draw_grid(screen, rect_x1, rect_y1, {},reveal1,mouse_x,mouse_y)
             print(f'Mouse clicked at: ({mouse_x}, {mouse_y})')
     return True
     
