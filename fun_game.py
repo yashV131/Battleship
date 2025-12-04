@@ -150,7 +150,7 @@ def event_handler():
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
 
-            if len(player2_clicks) >= 5:
+            if len(player2_clicks) > 5:
                 print("Both players have finished placing ships.")
                 
             # PLAYER 1 TURN
