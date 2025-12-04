@@ -65,6 +65,14 @@ player2_clicks = []
 #draw the grid for battleships
 def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
     if(reveal):
+        # FIX: choose clicks that belong only to THIS player
+        if player_name == "player1":
+            clicks = player1_clicks
+        elif player_name == "player2":
+            clicks = player2_clicks
+        else:
+            clicks = []
+
         for x in range(20):
             for y in range(20):
                 # calculate cell position
@@ -77,19 +85,11 @@ def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
                 rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                 color = WHITE
                 pygame.draw.rect(surface, color, rect)
-                for x_coord,y_coord in player1_clicks:
+
+                # FIX: draw only the proper player's clicks
+                for x_coord, y_coord in clicks:
                     if x_coord is not None and y_coord is not None:
-                        #check if mouse is inside the cell
                         if leftwall <= x_coord <= rightwall and topwall <= y_coord <= bottomwall:
-                            #draw black box
-                            # rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
-                            pygame.draw.rect(surface, RED, rect)
-                for x_coord,y_coord in player2_clicks:
-                    if x_coord is not None and y_coord is not None:
-                        #check if mouse is inside the cell
-                        if leftwall <= x_coord <= rightwall and topwall <= y_coord <= bottomwall:
-                            #draw black box
-                            # rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                             pygame.draw.rect(surface, RED, rect)
                 
     else:
@@ -116,32 +116,14 @@ def reveal_player_ships(reveal1):
         draw_grid(screen, rect_x2, rect_y1, {},True,"player2") 
    
 
-# def event_handler():
-#      #Display mouse coordinates    
-#     global mouse_x, mouse_y
-#     x_coord, y_coord = pygame.mouse.get_pos()
-#     mouse_text = font.render(f' X,Y:({x_coord}, {y_coord})', True, WHITE)
-#     screen.blit(mouse_text, (800,500))
-    
-#     for event in pygame.event.get():
-#         if event.type == pygame.QUIT:
-#             return False
-#         elif event.type == pygame.MOUSEBUTTONDOWN:
-#             mouse_x, mouse_y = pygame.mouse.get_pos()
-            
-#             player1_clicks.append((mouse_x, mouse_y))
-#             #draw grid with black box
-#             draw_grid(screen, rect_x1, rect_y1, {},reveal1)
-#             print(f'Mouse clicked at: ({mouse_x}, {mouse_y})')
-#     return True
 
 def event_handler():
     global mouse_x, mouse_y, reveal1
 
-    # Display mouse coordinates    
+    #Display mouse coordinates    
     x_coord, y_coord = pygame.mouse.get_pos()
     mouse_text = font.render(f' X,Y:({x_coord}, {y_coord})', True, WHITE)
-    screen.blit(mouse_text, (800, 500))
+    screen.blit(mouse_text, (800,500))
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -158,9 +140,19 @@ def event_handler():
                 player1_clicks.append((mouse_x, mouse_y))
                 print("P1 click:", mouse_x, mouse_y)
 
-                # Switch after 5 clicks
-                if len(player1_clicks) > 4:
-                    print("Switching to Player 2...")
+                # FIX: show the 5th click BEFORE switching
+                if len(player1_clicks) == 5:
+                    # Immediately redraw the screen so the new click is visible
+                    screen.fill((0,0,0))
+                    reveal_player_ships(reveal1)  # draw current (player1) grid with the new click
+                    pygame.draw.rect(screen, BLUE, (rect_x1, rect_y1, rect_width, rect_height), line_thickness)
+                    pygame.draw.rect(screen, BLUE, (rect_x2, rect_y1, rect_width, rect_height), line_thickness)
+                    # Also update mouse coordinates display (optional, keeps UI consistent)
+                    x_coord2, y_coord2 = pygame.mouse.get_pos()
+                    mouse_text2 = font.render(f' X,Y:({x_coord2}, {y_coord2})', True, WHITE)
+                    screen.blit(mouse_text2, (800,500))
+                    pygame.display.flip()
+                    pygame.time.delay(500)
                     reveal1 = False
 
             # PLAYER 2 TURN
@@ -169,12 +161,11 @@ def event_handler():
                 print("P2 click:", mouse_x, mouse_y)
 
                 # stop after 5 clicks
-                if len(player2_clicks) > 4:
+                if len(player2_clicks) == 5:
                     print("Player 2 finished placing ships.")
 
     return True
 
-  
   
 # Game loop
 running = True
