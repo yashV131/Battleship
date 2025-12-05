@@ -55,6 +55,7 @@ mouse_x, mouse_y = None, None
 
 #reveal grids toggle
 reveal1 = True
+
 #Initialize plater grids: (x,y):False (no ship) or True (ship)
 player1_grid = {(x, y): False for x in range(20) for y in range(20)}
 player2_grid = {(x, y): False for x in range(20) for y in range(20)}
@@ -64,6 +65,8 @@ player2_clicks = []
 
 #battleship sizes
 ship_sizes = [5, 4, 3, 3, 2] 
+
+
 
 #draw the grid for battleships
 def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
@@ -122,11 +125,18 @@ def reveal_player_ships(reveal1):
         draw_grid(screen, rect_x1, rect_y1, {})
         draw_grid(screen, rect_x2, rect_y1, {},True,"player2") 
    
-def has_beenclicked(x, y, clicks):
+def has_beenclicked(mx, my, clicks,player_name):
+    #also check if the cell is within the grid boundaries
+    if(player_name == "player1"):
+        if mx < rect_x1 or mx > rect_x1+ rect_width or my < rect_y1 or my > rect_y1 + rect_height:
+            return True
+    elif(player_name == "player2"):
+        if mx < rect_x2 or mx > rect_x2 + rect_width or my < rect_y1 or my > rect_y1 + rect_height:
+            return True
     #To implement: check if the cell has already been clicked
     for click_x, click_y in clicks:
         if click_x is not None and click_y is not None:
-            if abs(click_x - x) < CELL_SIZE and abs(click_y - y) < CELL_SIZE:
+            if abs(click_x - mx) < CELL_SIZE and abs(click_y - my) < CELL_SIZE:
                 return True
     return False
 
@@ -142,6 +152,7 @@ def event_handler():
         if event.type == pygame.QUIT:
             return False
         
+        
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -150,7 +161,7 @@ def event_handler():
                 
             # PLAYER 1 TURN
             elif reveal1:
-                if has_beenclicked(mouse_x, mouse_y, player1_clicks):
+                if has_beenclicked(mouse_x, mouse_y, player1_clicks,"player1"):
                     print("Player 1 already clicked this cell. Choose another.")
                     continue
                 player1_clicks.append((mouse_x, mouse_y))
@@ -173,7 +184,7 @@ def event_handler():
 
             # PLAYER 2 TURN
             else:
-                if has_beenclicked(mouse_x, mouse_y, player2_clicks):
+                if has_beenclicked(mouse_x, mouse_y, player2_clicks,"player2"):
                     print("Player 2 already clicked this cell. Choose another.")
                     continue
                 player2_clicks.append((mouse_x, mouse_y))
@@ -182,13 +193,18 @@ def event_handler():
                 # stop after 5 clicks
                 if len(player2_clicks) == 5:
                     print("Player 2 finished placing ships.")
+                    
+                    
 
     return True
 
-  
+def show_instructions():
+    instructions = open("instructions.txt", "r").read()
+    print(instructions)
 # Game loop
 running = True
 while running:
+    
     # Fill the background
     screen.fill((0,0,0))
     
