@@ -62,6 +62,9 @@ player2_grid = {(x, y): False for x in range(20) for y in range(20)}
 player1_clicks = []
 player2_clicks = []
 
+#battleship sizes
+ship_sizes = [5, 4, 3, 3, 2] 
+
 #draw the grid for battleships
 def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
     if(reveal):
@@ -90,7 +93,11 @@ def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
                 for x_coord, y_coord in clicks:
                     if x_coord is not None and y_coord is not None:
                         if leftwall <= x_coord <= rightwall and topwall <= y_coord <= bottomwall:
+                            rect = pygame.Rect(leftwall, topwall, CELL_SIZE-1, CELL_SIZE - 1)
                             pygame.draw.rect(surface, RED, rect)
+                            
+                            
+
                 
     else:
         rect = pygame.Rect(x0, y0, CELL_SIZE*20-1, CELL_SIZE*20-1)
@@ -115,7 +122,13 @@ def reveal_player_ships(reveal1):
         draw_grid(screen, rect_x1, rect_y1, {})
         draw_grid(screen, rect_x2, rect_y1, {},True,"player2") 
    
-
+def has_beenclicked(x, y, clicks):
+    #To implement: check if the cell has already been clicked
+    for click_x, click_y in clicks:
+        if click_x is not None and click_y is not None:
+            if abs(click_x - x) < CELL_SIZE and abs(click_y - y) < CELL_SIZE:
+                return True
+    return False
 
 def event_handler():
     global mouse_x, mouse_y, reveal1
@@ -137,6 +150,9 @@ def event_handler():
                 
             # PLAYER 1 TURN
             elif reveal1:
+                if has_beenclicked(mouse_x, mouse_y, player1_clicks):
+                    print("Player 1 already clicked this cell. Choose another.")
+                    continue
                 player1_clicks.append((mouse_x, mouse_y))
                 print("P1 click:", mouse_x, mouse_y)
 
@@ -157,6 +173,9 @@ def event_handler():
 
             # PLAYER 2 TURN
             else:
+                if has_beenclicked(mouse_x, mouse_y, player2_clicks):
+                    print("Player 2 already clicked this cell. Choose another.")
+                    continue
                 player2_clicks.append((mouse_x, mouse_y))
                 print("P2 click:", mouse_x, mouse_y)
 
