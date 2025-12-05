@@ -84,20 +84,35 @@ def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
                 # calculate cell position
                 leftwall = x0 + x * CELL_SIZE
                 topwall = y0 + y * CELL_SIZE
-                rightwall = leftwall + CELL_SIZE-1
-                bottomwall = topwall + CELL_SIZE-1
-
                 #draw original grid
                 rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                 color = WHITE
                 pygame.draw.rect(surface, color, rect)
 
-                # FIX: draw only the proper player's clicks
-                for x_coord, y_coord in clicks:
-                    if x_coord is not None and y_coord is not None:
-                        if leftwall <= x_coord <= rightwall and topwall <= y_coord <= bottomwall:
-                            rect = pygame.Rect(leftwall, topwall, CELL_SIZE-1, CELL_SIZE - 1)
-                            pygame.draw.rect(surface, RED, rect)
+                # Draw only the proper player's clicks
+                for click_x, click_y in clicks:
+                    if click_x is None or click_y is None:
+                        continue
+
+                    # Convert click pixels to grid coordinates
+                    grid_x = (click_x - x0) // CELL_SIZE
+                    grid_y = (click_y - y0) // CELL_SIZE
+
+                    # Paint the clicked cell
+                    if grid_x - 1 == x and grid_y == y and grid_x + 1 >= 20:
+                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                        pygame.draw.rect(surface, RED, rect)
+                    
+                    if grid_x == x and grid_y == y:
+                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                        pygame.draw.rect(surface, RED, rect)
+
+                    # Paint the cell to the right (grid_x + 1)
+                    if grid_x + 1 == x and grid_y == y and grid_x + 1 < 20:
+                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                        pygame.draw.rect(surface, RED, rect)
+                    
+                    
                             
                             
 
@@ -167,7 +182,7 @@ def event_handler():
                 player1_clicks.append((mouse_x, mouse_y))
                 print("P1 click:", mouse_x, mouse_y)
 
-                # FIX: show the 5th click BEFORE switching
+                # Shows the 5th click BEFORE switching
                 if len(player1_clicks) == 5:
                     # Immediately redraw the screen so the new click is visible
                     screen.fill((0,0,0))
