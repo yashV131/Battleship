@@ -63,10 +63,15 @@ mouse_x, mouse_y = None, None
 #reveal grids toggle
 reveal1 = True
 in_battle = False
+current_player = 1  # Track whose turn it is (1 or 2)
 
 #Initialize plater grids: (x,y):False (no ship) or True (ship)
 player1_grid = {(x, y): False for x in range(20) for y in range(20)}
 player2_grid = {(x, y): False for x in range(20) for y in range(20)}
+
+# Track battle state: {(x, y): "hit" or "miss"}
+player1_battle_grid = {(x, y): None for x in range(20) for y in range(20)}
+player2_battle_grid = {(x, y): None for x in range(20) for y in range(20)}
 
 player1_clicks = []
 player2_clicks = []
@@ -78,16 +83,64 @@ ship_sizes = [5, 4, 3, 3, 2]
 
 ship_blocks = []
 
+def battle_players(surface, x0, y0, reveal=False, player_name=''):
+    if player_name == "player1":
+        opponent_grid = player2_grid
+        battle_grid = player1_battle_grid  # tracks what player1 has discovered
+    else:
+        opponent_grid = player1_grid
+        battle_grid = player2_battle_grid  # tracks what player2 has discovered
 
-def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='',battle = False):
+    for x in range(20):
+        for y in range(20):
+            cell_state = battle_grid.get((x, y))
+            if cell_state is not None:  # Only draw if this cell has been clicked
+                leftwall = x0 + x * CELL_SIZE
+                topwall = y0 + y * CELL_SIZE
+                rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                
+                if cell_state == "hit":
+                    pygame.draw.rect(surface, BLACK, rect)
+                elif cell_state == "miss":
+                    pygame.draw.rect(surface, (0, 100, 255), rect)  # dark blue for miss
+
+def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='', battle=False):
     if battle:
-    # During battle, only show white grid (opponent's ships hidden, grid data preserved)
+        # During battle, show white grid + battle results (hits/misses)
         for x in range(20):
             for y in range(20):
                 leftwall = x0 + x * CELL_SIZE
                 topwall = y0 + y * CELL_SIZE
                 rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                 pygame.draw.rect(surface, WHITE, rect)
+        
+        # Draw hits/misses based on which player's grid this is
+        if player_name == "player2":
+            # This is player 2's grid—show player 1's attacks
+            for x in range(20):
+                for y in range(20):
+                    state = player1_battle_grid.get((x, y))
+                    if state is not None:
+                        leftwall = x0 + x * CELL_SIZE
+                        topwall = y0 + y * CELL_SIZE
+                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                        if state == "hit":
+                            pygame.draw.rect(surface, BLACK, rect)
+                        elif state == "miss":
+                            pygame.draw.rect(surface, (0, 100, 255), rect)
+        else:
+            # This is player 1's grid—show player 2's attacks
+            for x in range(20):
+                for y in range(20):
+                    state = player2_battle_grid.get((x, y))
+                    if state is not None:
+                        leftwall = x0 + x * CELL_SIZE
+                        topwall = y0 + y * CELL_SIZE
+                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                        if state == "hit":
+                            pygame.draw.rect(surface, BLACK, rect)
+                        elif state == "miss":
+                            pygame.draw.rect(surface, (0, 100, 255), rect)
     elif reveal:
         # Choose which grid to read from
         if player_name == "player1":
@@ -176,8 +229,8 @@ def reveal_player_ships(reveal1,in_battle=False):
             current_size = ship_sizes[idx-1]
         else:
             current_size = ship_sizes[-1]   
-        draw_grid(screen, rect_x1, rect_y1, current_size, reveal1, "player1",in_battle)
-        draw_grid(screen, rect_x2, rect_y1,in_battle)
+        draw_grid(screen, rect_x1, rect_y1, current_size, reveal1, "player1", in_battle)
+        draw_grid(screen, rect_x2, rect_y1, 0, False, "player2", in_battle)
     else:
         # Player 2's turn
         text_surface = font.render('Player 2, place your ships!', True, (255, 255, 255))
@@ -215,6 +268,64 @@ def has_beenclicked(mx, my, clicks,player_name):
     
     return False
 
+def handle_battle_click(mx, my):
+    """Process a click during battle mode. Returns True if click was valid."""
+    global current_player
+    
+    if current_player == 1:
+        # Player 1 attacks player 2's grid (on the right)
+        if mx < rect_x2 or mx > rect_x2 + rect_width or my < rect_y1 or my > rect_y1 + rect_height:
+            return False
+        
+        gx = (mx - rect_x2) // CELL_SIZE
+        gy = (my - rect_y1) // CELL_SIZE
+        
+        if gx < 0 or gx >= 20 or gy < 0 or gy >= 20:
+            return False
+        
+        # Check if already attacked this cell
+        if player1_battle_grid[(gx, gy)] is not None:
+            print("Player 1: Already attacked this cell!")
+            return False
+        
+        # Check if opponent has a ship there
+        if player2_grid[(gx, gy)] is True or player2_grid[(gx, gy)] == "Y":
+            player1_battle_grid[(gx, gy)] = "hit"
+            print(f"Player 1: HIT at ({gx}, {gy})!")
+        else:
+            player1_battle_grid[(gx, gy)] = "miss"
+            print(f"Player 1: MISS at ({gx}, {gy})!")
+        
+        current_player = 2
+        return True
+    
+    else:
+        # Player 2 attacks player 1's grid (on the left)
+        if mx < rect_x1 or mx > rect_x1 + rect_width or my < rect_y1 or my > rect_y1 + rect_height:
+            return False
+        
+        gx = (mx - rect_x1) // CELL_SIZE
+        gy = (my - rect_y1) // CELL_SIZE
+        
+        if gx < 0 or gx >= 20 or gy < 0 or gy >= 20:
+            return False
+        
+        # Check if already attacked this cell
+        if player2_battle_grid[(gx, gy)] is not None:
+            print("Player 2: Already attacked this cell!")
+            return False
+        
+        # Check if opponent has a ship there
+        if player1_grid[(gx, gy)] is True or player1_grid[(gx, gy)] == "Y":
+            player2_battle_grid[(gx, gy)] = "hit"
+            print(f"Player 2: HIT at ({gx}, {gy})!")
+        else:
+            player2_battle_grid[(gx, gy)] = "miss"
+            print(f"Player 2: MISS at ({gx}, {gy})!")
+        
+        current_player = 1
+        return True
+
 def event_handler():
     global mouse_x, mouse_y, reveal1, in_battle
 
@@ -231,10 +342,15 @@ def event_handler():
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
          
+            if in_battle:
+                # During battle, process attacks
+                handle_battle_click(mouse_x, mouse_y)
             
-            if len(player2_clicks) > 5:
+            elif len(player2_clicks) > 5:
                 in_battle = True
                 print("Both players have finished placing ships.")
+                print("COORDINATE",mouse_x,mouse_y)
+                
                 
             # PLAYER 1 TURN
             elif reveal1:
@@ -292,6 +408,11 @@ while running:
     screen.fill((0,0,0))
     
     reveal_player_ships(reveal1, in_battle)
+    
+    # Show battle status
+    if in_battle:
+        status_text = font.render(f'Player {current_player}\'s Turn - Click opponent grid to attack!', True, (255, 200, 100))
+        screen.blit(status_text, (150, 480))
         
     pygame.draw.rect(screen, BLUE, (rect_x1, rect_y1, rect_width, rect_height), line_thickness)
     pygame.draw.rect(screen, BLUE, (rect_x2, rect_y1, rect_width, rect_height), line_thickness)
