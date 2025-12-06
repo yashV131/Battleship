@@ -69,84 +69,95 @@ ship_sizes = [5, 4, 3, 3, 2]
 
 
 #draw the grid for battleships
-def draw_grid(surface, x0, y0, grid,reveal=False,player_name=''):
-    if(reveal):
-        # FIX: choose clicks that belong only to THIS player
+
+ship_blocks = []
+  
+def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name=''):
+    if reveal:
+
+        # Choose which grid to read from
         if player_name == "player1":
+            grid = player1_grid
             clicks = player1_clicks
-        elif player_name == "player2":
-            clicks = player2_clicks
         else:
-            clicks = []
+            grid = player2_grid
+            clicks = player2_clicks
+
+        #Upate grid dictionary based on clicks
+        for click_x, click_y in clicks:
+            gx = (click_x - x0) // CELL_SIZE
+            gy = (click_y - y0) // CELL_SIZE
+
+            if gx < 0 or gx >= 20 or gy < 0 or gy >= 20:
+                continue
+
+
+            # Decide ship direction
+            if gx < 16:  
+                # Normal left to right
+                for i in range(ship_size):
+                    sx = gx + i
+                    if sx < 20:
+                        grid[(sx, gy)] = True
+            else:
+                # Backwards right to left
+                for i in range(ship_size):
+                    sx = gx - i
+                    if sx >= 0:
+                        grid[(sx, gy)] = True
+            
+            # Store the starting click with yellow
+            grid[(gx, gy)] = "Y"
 
         for x in range(20):
             for y in range(20):
-                # calculate cell position
+
                 leftwall = x0 + x * CELL_SIZE
                 topwall = y0 + y * CELL_SIZE
-                #draw original grid
                 rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
-                color = WHITE
-                pygame.draw.rect(surface, color, rect)
 
-                # Draw only the proper player's clicks
-                for click_x, click_y in clicks:
-                    if click_x is None or click_y is None:
-                        continue
+                # Default white cell
+                pygame.draw.rect(surface, WHITE, rect)
 
-                    # Convert click pixels to grid coordinates
-                    grid_x = (click_x - x0) // CELL_SIZE
-                    grid_y = (click_y - y0) // CELL_SIZE
 
-                    # Paint the clicked cell
-                    if grid_x - 1 == x and grid_y == y and grid_x + 1 >= 20:
-                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
-                        pygame.draw.rect(surface, RED, rect)
+                # Draw red for ship blocks
+                if grid[(x, y)] is True and grid[(x, y)] != "Y":
+                    pygame.draw.rect(surface, BLUE, rect)
                     
-                    if grid_x == x and grid_y == y:
-                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
-                        pygame.draw.rect(surface, RED, rect)
+                # Draw yellow for starting clicks
+                if grid[(x, y)] == "Y":
+                    pygame.draw.rect(surface, YELLOW, rect)
 
-                    # Paint the cell to the right (grid_x + 1)
-                    if grid_x + 1 == x and grid_y == y and grid_x + 1 < 20:
-                        rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
-                        pygame.draw.rect(surface, RED, rect)
-                    
-                    
-                            
-                            
-
-                
     else:
         rect = pygame.Rect(x0, y0, CELL_SIZE*20-1, CELL_SIZE*20-1)
-        color = (0,0,0)
-        pygame.draw.rect(surface, color, rect)
-        text_surface = font.render('It is not your turn yet!', True, (255, 255, 255))
+        pygame.draw.rect(surface, BLACK, rect)
+        text_surface = font.render('It is not your turn yet!', True, WHITE)
         screen.blit(text_surface, (x0+100, y0+190))
-  
+
 def reveal_player_ships(reveal1):
     if(reveal1):
         # Player 1's turn
         text_surface = font.render('Player 1, place your ships!', True, (255, 255, 255))
         screen.blit(text_surface, (rect_x1, rect_y1-40))  
         
-        draw_grid(screen, rect_x1, rect_y1, {},reveal1,"player1")
-        draw_grid(screen, rect_x2, rect_y1, {})
+        #after rect_y1 - > 5 - ship size to be replaced.
+        draw_grid(screen, rect_x1, rect_y1,5, reveal1,"player1")
+        draw_grid(screen, rect_x2, rect_y1)
     else:
         # Player 2's turn
         text_surface = font.render('Player 2, place your ships!', True, (255, 255, 255))
         screen.blit(text_surface, (rect_x2, rect_y1-40))  
         
-        draw_grid(screen, rect_x1, rect_y1, {})
-        draw_grid(screen, rect_x2, rect_y1, {},True,"player2") 
+        draw_grid(screen, rect_x1, rect_y1)
+        draw_grid(screen, rect_x2, rect_y1,5,True,"player2") 
    
 def has_beenclicked(mx, my, clicks,player_name):
     #also check if the cell is within the grid boundaries
     if(player_name == "player1"):
-        if mx < rect_x1 or mx > rect_x1+ rect_width or my < rect_y1 or my > rect_y1 + rect_height:
+        if mx < rect_x1 or mx > rect_x1+ rect_width:
             return True
     elif(player_name == "player2"):
-        if mx < rect_x2 or mx > rect_x2 + rect_width or my < rect_y1 or my > rect_y1 + rect_height:
+        if mx < rect_x2 or mx > rect_x2 + rect_width:
             return True
     #To implement: check if the cell has already been clicked
     for click_x, click_y in clicks:
