@@ -55,6 +55,7 @@ mouse_x, mouse_y = None, None
 
 #reveal grids toggle
 reveal1 = True
+in_battle = False
 
 #Initialize plater grids: (x,y):False (no ship) or True (ship)
 player1_grid = {(x, y): False for x in range(20) for y in range(20)}
@@ -71,8 +72,15 @@ ship_sizes = [5, 4, 3, 3, 2]
 ship_blocks = []
   
 def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='',battle = False):
-    if reveal:
-
+    if battle:
+    # During battle, only show white grid (opponent's ships hidden, grid data preserved)
+        for x in range(20):
+            for y in range(20):
+                leftwall = x0 + x * CELL_SIZE
+                topwall = y0 + y * CELL_SIZE
+                rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                pygame.draw.rect(surface, WHITE, rect)
+    elif reveal:
         # Choose which grid to read from
         if player_name == "player1":
             grid = player1_grid
@@ -81,47 +89,56 @@ def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='',battle 
             grid = player2_grid
             clicks = player2_clicks
 
-        #Update grid dictionary based on clicks - only process the last click for preview
-        if clicks:
-            click_x, click_y = clicks[-1]  # Get only the most recent click
-            gx = (click_x - x0) // CELL_SIZE
-            gy = (click_y - y0) // CELL_SIZE
+        if battle:
+            # During battle, only show white grid (opponent's ships hidden, grid data preserved)
+            for x in range(20):
+                for y in range(20):
+                    leftwall = x0 + x * CELL_SIZE
+                    topwall = y0 + y * CELL_SIZE
+                    rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                    pygame.draw.rect(surface, WHITE, rect)
+        else:
+            # During placement, show ship previews
+            #Update grid dictionary based on clicks - only process the last click for preview
+            if clicks:
+                click_x, click_y = clicks[-1]  # Get only the most recent click
+                gx = (click_x - x0) // CELL_SIZE
+                gy = (click_y - y0) // CELL_SIZE
 
-            if gx >= 0 and gx < 20 and gy >= 0 and gy < 20 and not battle:
-                # Decide ship direction based on position
-                if gx < 20 - ship_size + 1:  
-                    # Normal left to right
-                    for i in range(ship_size):
-                        sx = gx + i
-                        if sx < 20:
-                            grid[(sx, gy)] = True
-                else:
-                    # Backwards right to left
-                    for i in range(ship_size):
-                        sx = gx - i
-                        if sx >= 0:
-                            grid[(sx, gy)] = True
-                
-                # Store the starting click with yellow
-                grid[(gx, gy)] = "Y"
+                if gx >= 0 and gx < 20 and gy >= 0 and gy < 20:
+                    # Decide ship direction based on position
+                    if gx < 20 - ship_size + 1:  
+                        # Normal left to right
+                        for i in range(ship_size):
+                            sx = gx + i
+                            if sx < 20:
+                                grid[(sx, gy)] = True
+                    else:
+                        # Backwards right to left
+                        for i in range(ship_size):
+                            sx = gx - i
+                            if sx >= 0:
+                                grid[(sx, gy)] = True
+                    
+                    # Store the starting click with yellow
+                    grid[(gx, gy)] = "Y"
 
-        for x in range(20):
-            for y in range(20):
+            for x in range(20):
+                for y in range(20):
+                    leftwall = x0 + x * CELL_SIZE
+                    topwall = y0 + y * CELL_SIZE
+                    rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
 
-                leftwall = x0 + x * CELL_SIZE
-                topwall = y0 + y * CELL_SIZE
-               
-                rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
+                    # Default white cell
+                    pygame.draw.rect(surface, WHITE, rect)
 
-                # Default white cell
-                pygame.draw.rect(surface, WHITE, rect)
-
-                # Draw yellow for starting clicks first
-                if grid[(x, y)] == "Y":
-                    pygame.draw.rect(surface, YELLOW, rect)
-                # Draw blue for ship blocks (but not if it's yellow)
-                elif grid[(x, y)] is True:
-                    pygame.draw.rect(surface, BLUE, rect)
+                    # Draw yellow for starting clicks first
+                    if grid[(x, y)] == "Y" and not battle:
+                        pygame.draw.rect(surface, YELLOW, rect)
+                        # print("YELLOW CALLED")
+                    # Draw blue for ship blocks (but not if it's yellow)
+                    elif grid[(x, y)] is True and not battle:
+                        pygame.draw.rect(surface, BLUE, rect)
 
     else:
         rect = pygame.Rect(x0, y0, CELL_SIZE*20-1, CELL_SIZE*20-1)
@@ -148,9 +165,9 @@ def reveal_player_ships(reveal1,in_battle=False):
         if idx < len(ship_sizes):
             current_size = ship_sizes[idx-1]
         else:
-            current_size = ship_sizes[-1]
+            current_size = ship_sizes[-1]   
         draw_grid(screen, rect_x1, rect_y1, current_size, reveal1, "player1",in_battle)
-        draw_grid(screen, rect_x2, rect_y1)
+        draw_grid(screen, rect_x2, rect_y1,in_battle)
     else:
         # Player 2's turn
         text_surface = font.render('Player 2, place your ships!', True, (255, 255, 255))
@@ -161,7 +178,7 @@ def reveal_player_ships(reveal1,in_battle=False):
             current_size2 = ship_sizes[idx2-1]
         else:
             current_size2 = ship_sizes[-1]
-        draw_grid(screen, rect_x1, rect_y1)
+        draw_grid(screen, rect_x1, rect_y1, 0, False, "player1", in_battle)
         draw_grid(screen, rect_x2, rect_y1, current_size2, True, "player2",in_battle) 
    
 def has_beenclicked(mx, my, clicks,player_name):
@@ -189,7 +206,7 @@ def has_beenclicked(mx, my, clicks,player_name):
     return False
 
 def event_handler():
-    global mouse_x, mouse_y, reveal1
+    global mouse_x, mouse_y, reveal1, in_battle
 
     #Display mouse coordinates    
     x_coord, y_coord = pygame.mouse.get_pos()
@@ -206,7 +223,7 @@ def event_handler():
          
             
             if len(player2_clicks) > 4:
-                reveal_player_ships(reveal1,True)
+                in_battle = True
                 print("Both players have finished placing ships.")
                 
             # PLAYER 1 TURN
@@ -260,7 +277,7 @@ while running:
     # Fill the background
     screen.fill((0,0,0))
     
-    reveal_player_ships(reveal1)
+    reveal_player_ships(reveal1, in_battle)
         
     pygame.draw.rect(screen, BLUE, (rect_x1, rect_y1, rect_width, rect_height), line_thickness)
     pygame.draw.rect(screen, BLUE, (rect_x2, rect_y1, rect_width, rect_height), line_thickness)
