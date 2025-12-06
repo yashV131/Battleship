@@ -70,7 +70,7 @@ ship_sizes = [5, 4, 3, 3, 2]
 
 ship_blocks = []
   
-def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name=''):
+def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='',battle = False):
     if reveal:
 
         # Choose which grid to read from
@@ -81,31 +81,29 @@ def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name=''):
             grid = player2_grid
             clicks = player2_clicks
 
-        #Upate grid dictionary based on clicks
-        for click_x, click_y in clicks:
+        #Update grid dictionary based on clicks - only process the last click for preview
+        if clicks:
+            click_x, click_y = clicks[-1]  # Get only the most recent click
             gx = (click_x - x0) // CELL_SIZE
             gy = (click_y - y0) // CELL_SIZE
 
-            if gx < 0 or gx >= 20 or gy < 0 or gy >= 20:
-                continue
-
-
-            # Decide ship direction
-            if gx < 20-ship_size+1:  
-                # Normal left to right
-                for i in range(ship_size):
-                    sx = gx + i
-                    if sx < 20:
-                        grid[(sx, gy)] = True
-            else:
-                # Backwards right to left
-                for i in range(ship_size):
-                    sx = gx - i
-                    if sx >= 0:
-                        grid[(sx, gy)] = True
-            
-            # Store the starting click with yellow
-            grid[(gx, gy)] = "Y"
+            if gx >= 0 and gx < 20 and gy >= 0 and gy < 20 and not battle:
+                # Decide ship direction based on position
+                if gx < 20 - ship_size + 1:  
+                    # Normal left to right
+                    for i in range(ship_size):
+                        sx = gx + i
+                        if sx < 20:
+                            grid[(sx, gy)] = True
+                else:
+                    # Backwards right to left
+                    for i in range(ship_size):
+                        sx = gx - i
+                        if sx >= 0:
+                            grid[(sx, gy)] = True
+                
+                # Store the starting click with yellow
+                grid[(gx, gy)] = "Y"
 
         for x in range(20):
             for y in range(20):
@@ -118,14 +116,12 @@ def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name=''):
                 # Default white cell
                 pygame.draw.rect(surface, WHITE, rect)
 
-
-                # Draw red for ship blocks
-                if grid[(x, y)] is True:
-                    pygame.draw.rect(surface, BLUE, rect)
-                    
-                # Draw yellow for starting clicks
+                # Draw yellow for starting clicks first
                 if grid[(x, y)] == "Y":
                     pygame.draw.rect(surface, YELLOW, rect)
+                # Draw blue for ship blocks (but not if it's yellow)
+                elif grid[(x, y)] is True:
+                    pygame.draw.rect(surface, BLUE, rect)
 
     else:
         rect = pygame.Rect(x0, y0, CELL_SIZE*20-1, CELL_SIZE*20-1)
@@ -133,12 +129,14 @@ def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name=''):
         text_surface = font.render('It is not your turn yet!', True, WHITE)
         screen.blit(text_surface, (x0+100, y0+190))
 
+#TODO
 # def rotateblocks():
+
+#hit = black
+#miss = blue - dark blue - ocean
+# def battle_logic(player,)
     
-    
-    
-    
-def reveal_player_ships(reveal1):
+def reveal_player_ships(reveal1,in_battle=False):
     if(reveal1):
         # Player 1's turn
         text_surface = font.render('Player 1, place your ships!', True, (255, 255, 255))
@@ -148,10 +146,10 @@ def reveal_player_ships(reveal1):
         # choose the current ship size based on how many ships already placed
         idx = len(player1_clicks)
         if idx < len(ship_sizes):
-            current_size = ship_sizes[idx]
+            current_size = ship_sizes[idx-1]
         else:
             current_size = ship_sizes[-1]
-        draw_grid(screen, rect_x1, rect_y1, current_size, reveal1, "player1")
+        draw_grid(screen, rect_x1, rect_y1, current_size, reveal1, "player1",in_battle)
         draw_grid(screen, rect_x2, rect_y1)
     else:
         # Player 2's turn
@@ -160,14 +158,13 @@ def reveal_player_ships(reveal1):
         # choose the current ship size for player2
         idx2 = len(player2_clicks)
         if idx2 < len(ship_sizes):
-            current_size2 = ship_sizes[idx2]
+            current_size2 = ship_sizes[idx2-1]
         else:
             current_size2 = ship_sizes[-1]
         draw_grid(screen, rect_x1, rect_y1)
-        draw_grid(screen, rect_x2, rect_y1, current_size2, True, "player2") 
+        draw_grid(screen, rect_x2, rect_y1, current_size2, True, "player2",in_battle) 
    
 def has_beenclicked(mx, my, clicks,player_name):
-    """Check if a cell is outside grid boundaries or has already been clicked (blue or yellow)."""
     # Check if click is within grid boundaries
     if(player_name == "player1"):
         if mx < rect_x1 or mx > rect_x1 + rect_width or my < rect_y1 or my > rect_y1 + rect_height:
@@ -209,6 +206,7 @@ def event_handler():
          
             
             if len(player2_clicks) > 4:
+                reveal_player_ships(reveal1,True)
                 print("Both players have finished placing ships.")
                 
             # PLAYER 1 TURN
