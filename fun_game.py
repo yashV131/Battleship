@@ -12,6 +12,12 @@ dictionaries, functions (with docstrings), try-except statements, and comments
 new)
 • Be creative and have fun!
 Use only 1 class! Multiple classes cannot be created.
+
+PLAYER 1: RED SHIPS
+PLAYER 2: GREEN SHIPS
+WATER - BLUE
+HIT - BLACK
+
 '''
 #Creates a dashboard
 import pygame
@@ -35,6 +41,7 @@ BLUE = (0, 0, 255)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 BLACK = (0, 0, 0)
+GREEN = (0,255,0)
 
 # Player 1's box properties
 rect_x1 = 50
@@ -70,7 +77,8 @@ ship_sizes = [5, 4, 3, 3, 2]
 #draw the grid for battleships
 
 ship_blocks = []
-  
+
+
 def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='',battle = False):
     if battle:
     # During battle, only show white grid (opponent's ships hidden, grid data preserved)
@@ -97,6 +105,8 @@ def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='',battle 
                     topwall = y0 + y * CELL_SIZE
                     rect = pygame.Rect(leftwall, topwall, CELL_SIZE - 1, CELL_SIZE - 1)
                     pygame.draw.rect(surface, WHITE, rect)
+                    
+                    
         else:
             # During placement, show ship previews
             #Update grid dictionary based on clicks - only process the last click for preview
@@ -136,9 +146,9 @@ def draw_grid(surface, x0, y0, ship_size=0, reveal=False, player_name='',battle 
                     if grid[(x, y)] == "Y" and not battle:
                         pygame.draw.rect(surface, YELLOW, rect)
                         # print("YELLOW CALLED")
-                    # Draw blue for ship blocks (but not if it's yellow)
+                    # Draw red for ship blocks (but not if it's yellow)
                     elif grid[(x, y)] is True and not battle:
-                        pygame.draw.rect(surface, BLUE, rect)
+                        pygame.draw.rect(surface, RED, rect)
 
     else:
         rect = pygame.Rect(x0, y0, CELL_SIZE*20-1, CELL_SIZE*20-1)
@@ -222,7 +232,7 @@ def event_handler():
             mouse_x, mouse_y = pygame.mouse.get_pos()
          
             
-            if len(player2_clicks) > 4:
+            if len(player2_clicks) > 5:
                 in_battle = True
                 print("Both players have finished placing ships.")
                 
@@ -260,8 +270,12 @@ def event_handler():
                 print("P2 click:", mouse_x, mouse_y)
 
                 # stop after 5 clicks
-                if len(player2_clicks) == 5:
+                if len(player2_clicks) == 6:
+                    in_battle = True
+                    print("Both players have finished placing ships.")
                     print("Player 2 finished placing ships.")
+                    ship_count = sum(1 for v in player2_grid.values() if v is True)
+                    print(ship_count)
                     
                     
 
