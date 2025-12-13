@@ -1,7 +1,8 @@
 The rules of battleship:
 
 Objective
-Be the first player to sink all of your opponent’s ships by correctly guessing their locations on the grid.
+Be the first player to sink all of your opponent’s ships by correctly 
+guessing their locations on the grid.
 
 Number of Players
 Battleship is played with 2 players

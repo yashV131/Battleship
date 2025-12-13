@@ -30,9 +30,9 @@ pygame.init()
 pygame.font.init()
 
 # Fonts
-font = pygame.font.SysFont('Arial', 24)
-instr_font = pygame.font.SysFont('Arial', 20)
-winner_font = pygame.font.SysFont('Arial', 40, bold=True)
+font = pygame.font.SysFont('Lucida Calligraphy', 14)
+instr_font = pygame.font.SysFont('Lucida Calligraphy', 20)
+winner_font = pygame.font.SysFont('Lucida Calligraphy', 40, bold=True)
 
 # Screen dimensions
 screen_width = 1000
@@ -441,6 +441,16 @@ def main():
                 elif button_quit_rect.collidepoint(mx, my) and not game_over:
                     p1_final_score, p2_final_score = quit_game_early()
 
+                # Restart behavior: when in-game (normal UI) use the standard button rect,
+                # but if we're on the Game Over screen use a centered restart button.
+                elif game_over:
+                    gw = button_restart_rect.width
+                    gh = button_restart_rect.height
+                    gx = screen_width // 2 - gw // 2
+                    gy = screen_height // 2 + 80
+                    gameover_restart_rect = pygame.Rect(gx, gy, gw, gh)
+                    if gameover_restart_rect.collidepoint(mx, my):
+                        reset_game()
                 elif button_restart_rect.collidepoint(mx, my):
                     reset_game()
 
@@ -502,26 +512,37 @@ def main():
             # Game Over Screen
             screen.fill(BLACK)
             txt = winner_font.render("GAME OVER", True, WHITE)
-            screen.blit(txt, (screen_width//2 - 100, 150))
+            screen.blit(txt, (screen_width//2 -150, 150))
             
             score_txt = font.render(f"P1 Score: {p1_final_score}   vs   P2 Score: {p2_final_score}", True, BLUE)
-            screen.blit(score_txt, (screen_width//2 - 150, 250))
+            screen.blit(score_txt, (screen_width//2 - 100, 250))
             
             if p1_final_score > p2_final_score:
                 res = "Player 1 Wins!"
                 col = RED
+                res_txt = winner_font.render(res, True, col)
+                screen.blit(res_txt, (screen_width//2 - 150, 350))
             elif p2_final_score > p1_final_score:
                 res = "Player 2 Wins!"
                 col = GREEN
+                res_txt = winner_font.render(res, True, col)
+                screen.blit(res_txt, (screen_width//2 - 150, 350))
             else:
                 res = "It's a Tie!"
                 col = WHITE
+                res_txt = winner_font.render(res, True, col)
+                screen.blit(res_txt, (screen_width//2 - 100, 350))
                 
-            res_txt = winner_font.render(res, True, col)
-            screen.blit(res_txt, (screen_width//2 - 120, 350))
-            # Restart button on Game Over screen
-            pygame.draw.rect(screen, GREEN, button_restart_rect)
-            screen.blit(font.render("Restart", True, BLACK), (button_restart_rect.x + 60, button_restart_rect.y + 10))
+            # res_txt = winner_font.render(res, True, col)
+            # screen.blit(res_txt, (screen_width//2 - 100, 350))
+            # Draw centered Restart button on Game Over screen
+            gw = button_restart_rect.width
+            gh = button_restart_rect.height
+            gx = screen_width // 2 - gw // 2
+            gy = screen_height // 2 + 80
+            gameover_restart_rect = pygame.Rect(gx, gy, gw, gh)
+            pygame.draw.rect(screen, GREEN, gameover_restart_rect)
+            screen.blit(font.render("Restart", True, BLACK), (gameover_restart_rect.x + 70, gameover_restart_rect.y + 15))
             
         else:
             # Standard Game Drawing
@@ -549,7 +570,7 @@ def main():
             # Buttons
             pygame.draw.rect(screen, GRAY, button_instr_rect)
             pygame.draw.rect(screen, RED, button_quit_rect)
-            pygame.draw.rect(screen, GREEN, button_restart_rect)
+            pygame.draw.rect(screen, BLUE, button_restart_rect)
 
             screen.blit(font.render("Instructions (I)", True, BLACK), (button_instr_rect.x + 20, button_instr_rect.y + 10))
             screen.blit(font.render("Quit Early", True, WHITE), (button_quit_rect.x + 45, button_quit_rect.y + 10))
